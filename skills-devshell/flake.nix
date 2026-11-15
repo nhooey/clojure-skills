@@ -1,5 +1,5 @@
 {
-  description = "clojure-skills dev-shell skill set — an isolated sub-flake invoked at RUNTIME by the root devShell, never a root input. The skill sources (the git/GitHub pack plus skillspkgs' authoring combination) live only in THIS flake's lock, so the root clojure-skills stays a leaf with zero skill inputs and transitive consumers never drag the skill mesh in.";
+  description = "clojure-skills dev-shell skill set — an isolated sub-flake invoked at RUNTIME by the root devShell, never a root input. The skill sources (the base coding-agent, git/GitHub and shell skills plus skillspkgs' authoring combination) live only in THIS flake's lock, so the root clojure-skills stays a leaf with zero skill inputs and transitive consumers never drag the skill mesh in.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -20,8 +20,18 @@
     # its own (compatible) builder. `mkDevshellSkillsFlake` still runs from this
     # flake's `agent-skill-flake.lib`, so the combiner is the pinned rev above.
 
+    # The base skills every agent run in this checkout needs, at each
+    # repository's `overnight-skills` branch.
+    coding-agent-skills = {
+      url = "github:nhooey/coding-agent-skills/overnight-skills";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     git-skills = {
-      url = "github:nhooey/git-skills";
+      url = "github:nhooey/git-skills/overnight-skills";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    shell-skills = {
+      url = "github:nhooey/shell-skills/overnight-skills";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -35,9 +45,9 @@
   };
 
   # One `mkDevshellSkillsFlake` call: the dev shell's whole skill set as a
-  # single combination, surfaced as runnable apps (reconcile / purge / …). This
-  # reproduces the previously-inlined root set exactly — the git/GitHub pack
-  # plus skillspkgs' `authoring` combination.
+  # single combination, surfaced as runnable apps (reconcile / purge / …): the
+  # base coding-agent, git/GitHub and shell skills plus skillspkgs' `authoring`
+  # combination.
   outputs =
     {
       nixpkgs,
@@ -53,7 +63,19 @@
       # (== agent-skills-shell-skills-devshell) and packagePrefix
       # defaults to "agent-skill-", so both equal what was spelled out here.
       sources = [
+        # Running headless in a checkout, keeping the scratchpad tidy, and
+        # the cross-repository plan's graph.
+        {
+          source = inputs.coding-agent-skills;
+          skills = [
+            "coding-agent-headless-in-checkout"
+            "coding-agent-plans-as-graph"
+            "coding-agent-scratchpad-scripts"
+          ];
+        }
         { source = inputs.git-skills; }
+        # Safe shell commands: named deletes, PIDs, no machine-wide changes.
+        { source = inputs.shell-skills; }
         { source = inputs.skillspkgs-combinations.combinations.authoring; }
       ];
     };
