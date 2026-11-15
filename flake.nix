@@ -67,8 +67,8 @@
         # skillspkgs / nur-packages' last-write-wins `//` merge; the
         # owner+topic name is resolvable and unique, mirroring git-skills's
         # `agent-skills-nhooey-git-all`. The aggregate carries the home-manager
-        # `isFlakeSkillsEnv` passthru itself (agent-skill-flake #47), so
-        # `default` is directly installable — no hand-rolled pack.
+        # `isFlakeSkillsEnv` passthru itself, so `default` is directly
+        # installable.
         name = "agent-skills-nhooey-clojure-all";
       };
     in
@@ -87,8 +87,8 @@
         inputs.treefmt-nix.flakeModule
       ];
 
-      # Keep shell-skills' custom banner; the module's generated motd is
-      # overridden by passing `motd` here.
+      # A custom banner: passing `motd` here overrides the module's generated
+      # one.
       agent-skill-flake.devshellSkills = {
         name = "clojure-skills";
         motd = ''
@@ -140,9 +140,9 @@
           # name, motd, the install-skills startup that reconciles the runtime
           # `skills-devshell/` sub-flake at project scope, the ci/dev/maintenance
           # command trio (check / fmt / update-flake), and the skills commands
-          # (reap-skills / update-skills-devshell). This repo adds no dev-shell
-          # packages or commands of its own, so there is no `devshells.default`
-          # block here.
+          # (reap-skills / reconcile-skills / update-skills-devshell). The
+          # `devshells.default.commands` block above adds this repo's one
+          # command of its own, `skill-citations`.
         };
     };
 }
