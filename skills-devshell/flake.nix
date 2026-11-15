@@ -61,7 +61,7 @@
       # envName and packagePrefix are left at their library defaults:
       # mkDevshellSkillsFlake derives envName = "agent-skills-${name}"
       # (== agent-skills-shell-skills-devshell) and packagePrefix
-      # defaults to "agent-skill-", so both equal what was spelled out here.
+      # defaults to "agent-skill-".
       sources = [
         # Running headless in a checkout, keeping the scratchpad tidy, and
         # the cross-repository plan's graph.
