@@ -53,7 +53,7 @@ Package outputs:
 ```bash
 nix develop      # enter the dev shell; run `menu` to list commands
 nix fmt          # nixfmt over *.nix, prettier over *.md / *.yaml
-nix flake check  # the treefmt check, and `skill-citations verify` for each skill with citations
+nix flake check  # the treefmt check, a build of every package, and `skill-citations verify` for each skill with citations
 ```
 
 Inside the dev shell:

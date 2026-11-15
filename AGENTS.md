@@ -9,6 +9,6 @@ from the `skills-devshell/` sub-flake and install into `.agents/skills/`.
 
 - `nix develop`: enter the dev shell, which installs the dev-shell skills
 - `nix fmt`: format `*.nix` with nixfmt and `*.md` / `*.yaml` with prettier
-- `nix flake check`: the formatting check, and `skill-citations verify` for
-  each skill with a `citations.lock.json`
+- `nix flake check`: the formatting check, a build of every package, and
+  `skill-citations verify` for each skill with a `citations.lock.json`
 - `nix build .#agent-skill-nhooey-<skill>`: build one skill's package

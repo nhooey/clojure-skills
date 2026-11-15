@@ -105,11 +105,14 @@
             inherit (inputs.skill-authoring-skills.apps.${system}) skill-citations;
           };
 
-          # `verify` for every skill with a citations.lock.json.
-          checks = inputs.skill-authoring-skills.lib.citationChecks {
-            inherit pkgs;
-            root = ./.;
-          };
+          # `verify` for every skill with a citations.lock.json, and a build
+          # of every package so `nix flake check` fails when one breaks.
+          checks =
+            inputs.skill-authoring-skills.lib.citationChecks {
+              inherit pkgs;
+              root = ./.;
+            }
+            // removeAttrs base.packages.${system} [ "default" ];
 
           devshells.default.commands = [
             {
