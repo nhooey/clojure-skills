@@ -16,9 +16,7 @@ allowed-tools:
 
 # Clojure, REPL-first
 
-Work in the REPL from the bottom up, and let tools check what reading the
-code can't. A running REPL answers what a function takes and returns
-today in a second; a full build answers it in minutes.
+_Work in the REPL from the bottom up, and let tools check what reading the code can't. A running REPL answers what a function takes and returns today in a second; a full build answers it in minutes._
 
 The project names its own commands for each step below, in its dev shell
 (`menu` lists them, and each takes `--help`) or in its preferences file
