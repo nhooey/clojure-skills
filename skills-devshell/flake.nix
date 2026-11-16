@@ -21,17 +21,17 @@
     # flake's `agent-skill-flake.lib`, so the combiner is the pinned rev above.
 
     # The base skills every agent run in this checkout needs, at each
-    # repository's `overnight-skills` branch.
+    # repository's default branch.
     coding-agent-skills = {
-      url = "github:nhooey/coding-agent-skills/overnight-skills";
+      url = "github:nhooey/coding-agent-skills";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     git-skills = {
-      url = "github:nhooey/git-skills/overnight-skills";
+      url = "github:nhooey/git-skills";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     shell-skills = {
-      url = "github:nhooey/shell-skills/overnight-skills";
+      url = "github:nhooey/shell-skills";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
