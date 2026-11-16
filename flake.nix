@@ -98,6 +98,20 @@
       };
       perSystem =
         { system, pkgs, ... }:
+        let
+          # The skill linter, a dev shell command and the `skill-lint` check.
+          skill-lint = pkgs.writeShellApplication {
+            name = "skill-lint";
+            runtimeInputs = with pkgs; [
+              coreutils
+              findutils
+              gawk
+              gnugrep
+              gnused
+            ];
+            text = builtins.readFile ./checks/skill-lint.sh;
+          };
+        in
         {
           packages = base.packages.${system};
 
@@ -116,11 +130,11 @@
             // removeAttrs base.packages.${system} [ "default" ]
             // {
               skill-lint = pkgs.runCommand "skill-lint" { } ''
-                ${pkgs.bash}/bin/bash ${./checks/skill-lint.sh} ${./skills}
+                ${pkgs.lib.getExe skill-lint} ${./skills}
                 touch $out
               '';
               skill-lint-test = pkgs.runCommand "skill-lint-test" { } ''
-                ${pkgs.bash}/bin/bash ${./checks/skill-lint-test.sh} ${./checks/skill-lint.sh}
+                ${pkgs.bash}/bin/bash ${./checks/skill-lint-test.sh} ${pkgs.lib.getExe skill-lint}
                 touch $out
               '';
             };
@@ -131,6 +145,12 @@
               name = "skill-citations";
               help = "lock, verify or drift-check a skill's upstream citations";
               package = inputs.skill-authoring-skills.packages.${system}.skill-citations;
+            }
+            {
+              category = "skills";
+              name = "skill-lint";
+              help = "lint each skill's frontmatter and links (default dir: skills)";
+              package = skill-lint;
             }
           ];
 
@@ -155,8 +175,8 @@
           # `skills-devshell/` sub-flake at project scope, the ci/dev/maintenance
           # command trio (check / fmt / update-flake), and the skills commands
           # (reap-skills / reconcile-skills / update-skills-devshell). The
-          # `devshells.default.commands` block above adds this repo's one
-          # command of its own, `skill-citations`.
+          # `devshells.default.commands` block above adds this repo's own
+          # commands, `skill-citations` and `skill-lint`.
         };
     };
 }
