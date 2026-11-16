@@ -78,20 +78,33 @@ description() {
        END { if (block) print out }'
 }
 
+# The lines of $1 outside code fences. A fence opens on ``` or ~~~, indented
+# or not (a fence inside a list item is indented), and closes on the same
+# marker.
+unfenced() {
+  awk 'match($0, /^[[:space:]]*(```|~~~)/) {
+         marker = substr($0, RSTART + RLENGTH - 3, 3)
+         if (fence == "") { fence = marker; next }
+         if (marker == fence) { fence = ""; next }
+       }
+       fence == "" { print }' "$1"
+}
+
 # GitHub-style anchor slug of each heading in $1, one per line.
 anchors() {
-  awk '/^```/ { fence = !fence; next }
-       !fence && /^#+ / { sub(/^#+ +/, ""); print }' "$1" |
+  unfenced "$1" |
+    awk '/^#+ / { sub(/^#+ +/, ""); print }' |
     tr '[:upper:]' '[:lower:]' |
     sed -e 's/[^a-z0-9 _-]//g' -e 's/ /-/g'
 }
 
 # Link targets of inline Markdown links in $1, outside code fences and
-# inline code, one per line.
+# inline code, one per line, without any quoted link title.
 link_targets() {
-  awk '/^```/ { fence = !fence; next } !fence { gsub(/`[^`]*`/, ""); print }' "$1" |
-    grep -oE '\]\([^)[:space:]]+\)' |
-    sed -e 's/^](//' -e 's/)$//' || true
+  unfenced "$1" |
+    awk '{ gsub(/`[^`]*`/, ""); print }' |
+    grep -oE '\]\([^)[:space:]]+([[:space:]]+"[^"]*")?\)' |
+    sed -e 's/^](//' -e 's/)$//' -e 's/[[:space:]].*$//' || true
 }
 
 check_links() {
