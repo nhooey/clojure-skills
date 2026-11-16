@@ -53,7 +53,7 @@ Package outputs:
 ```bash
 nix develop      # enter the dev shell; run `menu` to list commands
 nix fmt          # nixfmt over *.nix, prettier over *.md / *.yaml
-nix flake check  # the treefmt check, a build of every package, a lint of each skill's frontmatter and links (checks/skill-lint.sh, with its tests), and `skill-citations verify` for each skill with citations
+nix flake check  # the treefmt check, a build of every package, `skill-lint` over skills/ with its tests, and `skill-citations verify` for each skill with citations
 ```
 
 Inside the dev shell:
@@ -67,3 +67,5 @@ Inside the dev shell:
   reconcile the skills
 - `reap-skills`: remove every skill the dev shell installed
 - `skill-citations`: lock, verify or drift-check a skill's citations
+- `skill-lint`: lint each skill's frontmatter and links
+  (`checks/skill-lint.sh`, tested by `checks/skill-lint-test.sh`)
