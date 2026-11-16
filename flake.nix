@@ -67,8 +67,8 @@
         # skillspkgs / nur-packages' last-write-wins `//` merge; the
         # owner+topic name is resolvable and unique, mirroring git-skills's
         # `agent-skills-nhooey-git-all`. The aggregate carries the home-manager
-        # `isFlakeSkillsEnv` passthru itself (agent-skill-flake #47), so
-        # `default` is directly installable — no hand-rolled pack.
+        # `isFlakeSkillsEnv` passthru itself, so `default` is directly
+        # installable.
         name = "agent-skills-nhooey-clojure-all";
       };
     in
@@ -79,16 +79,16 @@
         # (motd, install-skills startup, the ci/dev/maintenance command trio,
         # and the reap-skills/update-skills-devshell pair). Configured via the
         # `agent-skill-flake.devshellSkills` options block below. The dev-shell
-        # skill set (the git/GitHub pack plus skillspkgs' `authoring`
-        # combination) is defined in the runtime `skills-devshell/` sub-flake
-        # and invoked at RUNTIME, never as a root input, so this repo keeps zero
-        # skill inputs in its own lock.
+        # skill set (the base coding-agent, git/GitHub and shell skills plus
+        # skillspkgs' `authoring` combination) is defined in the runtime
+        # `skills-devshell/` sub-flake and invoked at RUNTIME, never as a root
+        # input, so this repo keeps zero skill inputs in its own lock.
         inputs.agent-skill-flake.flakeModules.devshellSkills
         inputs.treefmt-nix.flakeModule
       ];
 
-      # Keep shell-skills' custom banner; the module's generated motd is
-      # overridden by passing `motd` here.
+      # A custom banner: passing `motd` here overrides the module's generated
+      # one.
       agent-skill-flake.devshellSkills = {
         name = "clojure-skills";
         motd = ''
@@ -105,11 +105,25 @@
             inherit (inputs.skill-authoring-skills.apps.${system}) skill-citations;
           };
 
-          # `verify` for every skill with a citations.lock.json.
-          checks = inputs.skill-authoring-skills.lib.citationChecks {
-            inherit pkgs;
-            root = ./.;
-          };
+          # `verify` for every skill with a citations.lock.json, a build of
+          # every package so `nix flake check` fails when one breaks, a lint
+          # of each skill's frontmatter and links, and the lint's own tests.
+          checks =
+            inputs.skill-authoring-skills.lib.citationChecks {
+              inherit pkgs;
+              root = ./.;
+            }
+            // removeAttrs base.packages.${system} [ "default" ]
+            // {
+              skill-lint = pkgs.runCommand "skill-lint" { } ''
+                ${pkgs.bash}/bin/bash ${./checks/skill-lint.sh} ${./skills}
+                touch $out
+              '';
+              skill-lint-test = pkgs.runCommand "skill-lint-test" { } ''
+                ${pkgs.bash}/bin/bash ${./checks/skill-lint-test.sh} ${./checks/skill-lint.sh}
+                touch $out
+              '';
+            };
 
           devshells.default.commands = [
             {
@@ -140,9 +154,9 @@
           # name, motd, the install-skills startup that reconciles the runtime
           # `skills-devshell/` sub-flake at project scope, the ci/dev/maintenance
           # command trio (check / fmt / update-flake), and the skills commands
-          # (reap-skills / update-skills-devshell). This repo adds no dev-shell
-          # packages or commands of its own, so there is no `devshells.default`
-          # block here.
+          # (reap-skills / reconcile-skills / update-skills-devshell). The
+          # `devshells.default.commands` block above adds this repo's one
+          # command of its own, `skill-citations`.
         };
     };
 }
