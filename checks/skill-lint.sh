@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Lint every skill under the directory given as $1:
+# skill-lint [SKILLS_DIR]: lint every skill under SKILLS_DIR (default
+# `skills`):
 #   - SKILL.md opens with a `---` frontmatter block that is closed
 #   - frontmatter `name:` equals the skill's directory name and is a valid
 #     Claude Code skill name (lowercase letters, digits, hyphens, 1-64)
@@ -7,11 +8,47 @@
 #     characters
 #   - every relative Markdown link in a skill's .md files points at a file
 #     that exists, and every `#anchor` link points at a heading in its file
-# Prints one line per problem and exits 1 if there were any.
+# Prints one line per problem to stderr and exits 1 if there were any, 2 on
+# bad usage.
 set -euo pipefail
 shopt -s nullglob
 
-skills_dir=${1:?usage: skill-lint.sh SKILLS_DIR}
+usage() {
+  cat <<'USAGE'
+usage: skill-lint [-h|--help] [SKILLS_DIR]
+
+Lint every skill directory under SKILLS_DIR (default: skills): each
+SKILL.md has a closed frontmatter block whose name matches its directory
+and is 1-64 lowercase letters, digits or hyphens, and whose description
+is non-empty and at most 1024 characters; every relative Markdown link in
+a skill's .md files points at an existing file and heading.
+
+Exit status: 0 when clean, 1 when there are problems, 2 on bad usage.
+
+Example: skill-lint skills
+USAGE
+}
+
+case ${1-} in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  -*)
+    printf 'skill-lint: unknown option: %s\n' "$1" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+if (($# > 1)); then
+  usage >&2
+  exit 2
+fi
+skills_dir=${1:-skills}
+if [[ ! -d $skills_dir ]]; then
+  printf 'skill-lint: not a directory: %s\n' "$skills_dir" >&2
+  exit 2
+fi
 problems=0
 
 problem() {

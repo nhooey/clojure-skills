@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Run skill-lint.sh ($1) on small skill trees, one problem each, and
-# require that it fails on each with the matching message and passes on
-# a clean tree.
+# Run the skill-lint command ($1) on small skill trees, one problem each,
+# and require that it fails on each with the matching message and passes
+# on a clean tree; then check its usage handling and exit statuses.
 set -euo pipefail
 
-lint=${1:?usage: skill-lint-test.sh SKILL_LINT_SH}
+lint=${1:?usage: skill-lint-test.sh SKILL_LINT}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 failures=0
@@ -25,7 +25,7 @@ description: |
 # expect_fail CASE PATTERN: lint $work/CASE must exit 1 and print PATTERN.
 expect_fail() {
   local out
-  if out=$(bash "$lint" "$work/$1" 2>&1); then
+  if out=$("$lint" "$work/$1" 2>&1); then
     echo "FAIL $1: lint passed, expected: $2"
     failures=$((failures + 1))
   elif ! grep -qF -- "$2" <<<"$out"; then
@@ -46,11 +46,11 @@ See [Usage](#usage) and [notes](notes.md#the-notes), not \`[code](nowhere.md)\`.
 ## Usage
 "
 printf '# The notes\n' >"$work/clean/demo/notes.md"
-if bash "$lint" "$work/clean" >/dev/null; then
+if "$lint" "$work/clean" >/dev/null; then
   echo "ok   clean"
 else
   echo "FAIL clean: lint failed on a clean skill"
-  bash "$lint" "$work/clean" || true
+  "$lint" "$work/clean" || true
   failures=$((failures + 1))
 fi
 
@@ -106,6 +106,37 @@ expect_fail missing-anchor "link to missing heading: #usage"
 
 mkdir -p "$work/empty"
 expect_fail empty "no skills found"
+
+# expect_usage NAME STATUS PATTERN ARGS...: lint ARGS must exit STATUS
+# and print PATTERN.
+expect_usage() {
+  local name=$1 want=$2 pattern=$3 out status=0
+  shift 3
+  out=$("$lint" "$@" 2>&1) || status=$?
+  if ((status != want)); then
+    echo "FAIL $name: exit $status, expected $want"
+    failures=$((failures + 1))
+  elif ! grep -qF -- "$pattern" <<<"$out"; then
+    echo "FAIL $name: expected '$pattern' in:"
+    printf '%s\n' "$out"
+    failures=$((failures + 1))
+  else
+    echo "ok   $name"
+  fi
+}
+
+expect_usage help 0 "usage: skill-lint" --help
+expect_usage help-short 0 "usage: skill-lint" -h
+expect_usage unknown-option 2 "unknown option: --nope" --nope
+expect_usage two-dirs 2 "usage: skill-lint" "$work/clean" "$work/empty"
+expect_usage missing-dir 2 "not a directory" "$work/absent"
+mkdir -p "$work/default/skills"
+cp -R "$work/clean/demo" "$work/default/skills/"
+pushd "$work" >/dev/null
+expect_usage default-dir-absent 2 "not a directory: skills"
+cd "$work/default"
+expect_usage default-dir 0 "1 skill(s) clean"
+popd >/dev/null
 
 if ((failures > 0)); then
   echo "$failures case(s) failed"
