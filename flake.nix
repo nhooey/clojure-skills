@@ -105,14 +105,25 @@
             inherit (inputs.skill-authoring-skills.apps.${system}) skill-citations;
           };
 
-          # `verify` for every skill with a citations.lock.json, and a build
-          # of every package so `nix flake check` fails when one breaks.
+          # `verify` for every skill with a citations.lock.json, a build of
+          # every package so `nix flake check` fails when one breaks, a lint
+          # of each skill's frontmatter and links, and the lint's own tests.
           checks =
             inputs.skill-authoring-skills.lib.citationChecks {
               inherit pkgs;
               root = ./.;
             }
-            // removeAttrs base.packages.${system} [ "default" ];
+            // removeAttrs base.packages.${system} [ "default" ]
+            // {
+              skill-lint = pkgs.runCommand "skill-lint" { } ''
+                ${pkgs.bash}/bin/bash ${./checks/skill-lint.sh} ${./skills}
+                touch $out
+              '';
+              skill-lint-test = pkgs.runCommand "skill-lint-test" { } ''
+                ${pkgs.bash}/bin/bash ${./checks/skill-lint-test.sh} ${./checks/skill-lint.sh}
+                touch $out
+              '';
+            };
 
           devshells.default.commands = [
             {
