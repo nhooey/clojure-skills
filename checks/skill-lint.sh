@@ -56,26 +56,18 @@ problem() {
   problems=$((problems + 1))
 }
 
-# The frontmatter block of $1, without its `---` fences. Empty when the
-# file has no closed block at the top.
-frontmatter() {
-  awk 'NR == 1 { if ($0 != "---") exit; next }
+# Whether $1 opens with a `---` frontmatter block that is closed. yq's
+# front-matter mode doesn't report a missing block, so this gate stays.
+has_frontmatter() {
+  awk 'NR == 1 { if ($0 != "---") exit 1; next }
        $0 == "---" { closed = 1; exit }
-       { block = block $0 "\n" }
-       END { if (closed) printf "%s", block }' "$1"
+       END { exit !closed }' "$1"
 }
 
-# The description's text: an inline value, or the indented lines of a
-# `|` / `>` block scalar, joined by single spaces.
-description() {
-  awk '/^description:/ {
-         sub(/^description:[[:space:]]*/, "")
-         if ($0 ~ /^[|>][-+]?$/) { block = 1; next }
-         print; exit
-       }
-       block && /^[[:space:]]/ { sub(/^[[:space:]]+/, ""); out = out (out ? " " : "") $0; next }
-       block { exit }
-       END { if (block) print out }'
+# The frontmatter value of key $2 in $1 as a string, read by yq-go; empty
+# when the key is missing or null. Fails when the frontmatter isn't YAML.
+frontmatter_value() {
+  yq --front-matter=extract ".$2 // \"\"" "$1"
 }
 
 # The lines of $1 outside code fences. A fence opens on ``` or ~~~, indented
@@ -143,11 +135,12 @@ for skill in "$skills_dir"/*/; do
     continue
   fi
 
-  fm=$(frontmatter "$file")
-  if [[ -z $fm ]]; then
+  if ! has_frontmatter "$file"; then
     problem "$file: no closed --- frontmatter block at the top"
+  elif ! name=$(frontmatter_value "$file" name 2>&1) ||
+    ! desc=$(frontmatter_value "$file" description 2>&1); then
+    problem "$file: frontmatter is not valid YAML"
   else
-    name=$(printf '%s\n' "$fm" | sed -n 's/^name:[[:space:]]*//p' | head -n1)
     if [[ -z $name ]]; then
       problem "$file: frontmatter has no name"
     elif [[ $name != "$dirname" ]]; then
@@ -156,7 +149,6 @@ for skill in "$skills_dir"/*/; do
       problem "$file: name '$name' is not 1-64 lowercase letters, digits or hyphens"
     fi
 
-    desc=$(printf '%s\n' "$fm" | description)
     if [[ -z $desc ]]; then
       problem "$file: frontmatter has no description"
     elif ((${#desc} > 1024)); then

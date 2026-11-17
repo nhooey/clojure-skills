@@ -65,6 +65,19 @@ else
   failures=$((failures + 1))
 fi
 
+make_skill "$work/quoted-name" demo '---
+name: "demo" # the skill
+description: >
+  A demo skill.
+---'
+if out=$("$lint" "$work/quoted-name" 2>&1); then
+  echo "ok   quoted-name"
+else
+  echo "FAIL quoted-name: lint failed on a quoted name:"
+  printf '%s\n' "$out"
+  failures=$((failures + 1))
+fi
+
 mkdir -p "$work/no-skill-md/demo"
 expect_fail no-skill-md "no SKILL.md"
 
@@ -75,6 +88,12 @@ make_skill "$work/unclosed" demo "---
 name: demo
 description: x"
 expect_fail unclosed "no closed --- frontmatter block"
+
+make_skill "$work/invalid-yaml" demo '---
+name: demo
+description: "unclosed
+---'
+expect_fail invalid-yaml "frontmatter is not valid YAML"
 
 make_skill "$work/wrong-name" demo "---
 name: other

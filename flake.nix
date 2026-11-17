@@ -108,6 +108,7 @@
               gawk
               gnugrep
               gnused
+              yq-go
             ];
             text = builtins.readFile ./checks/skill-lint.sh;
           };
