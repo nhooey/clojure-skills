@@ -2,8 +2,9 @@
 
 Coding-agent skills for writing Clojure and ClojureScript, packaged as a Nix
 flake built by agent-skill-flake. Each skill is a directory under `skills/`
-with a `SKILL.md` and its own `flake.nix`. The dev shell's own skills come
-from the `skills-devshell/` sub-flake and install into `.agents/skills/`.
+with a `SKILL.md` and its own `flake.nix`. The dev shell's own skills are
+skillspkgs' `skill-collections` family combination, with no additions, taken
+by the `skills-devshell/` sub-flake; they install into `.agents/skills/`.
 
 ## Build and test
 
