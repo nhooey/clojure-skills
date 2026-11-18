@@ -121,7 +121,9 @@
 
           # `verify` for every skill with a citations.lock.json, a build of
           # every package so `nix flake check` fails when one breaks, a lint
-          # of each skill's frontmatter and links, and the lint's own tests.
+          # of each skill's frontmatter and links, the lint's own tests, and a
+          # run of each "Your preferences" command line through a symlinked
+          # skill folder.
           checks =
             inputs.skill-authoring-skills.lib.citationChecks {
               inherit pkgs;
@@ -135,6 +137,10 @@
               '';
               skill-lint-test = pkgs.runCommand "skill-lint-test" { } ''
                 ${pkgs.bash}/bin/bash ${./checks/skill-lint-test.sh} ${pkgs.lib.getExe skill-lint}
+                touch $out
+              '';
+              preferences-section-test = pkgs.runCommand "preferences-section-test" { } ''
+                ${pkgs.bash}/bin/bash ${./checks/preferences-section-test.sh} ${./skills}
                 touch $out
               '';
             };
