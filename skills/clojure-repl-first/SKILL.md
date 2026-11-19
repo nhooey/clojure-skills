@@ -76,7 +76,7 @@ clj-kondo to lint against.
 
 ## Your preferences
 
-!`cat "${CLAUDE_SKILL_DIR}/../clojure-repl-first.preferences.md" "${CLAUDE_PROJECT_DIR}/.agents/skills/clojure-repl-first.preferences.md" 2>/dev/null || true`
+!`cat "$(dirname "${CLAUDE_SKILL_DIR}")/clojure-repl-first.preferences.md" "${CLAUDE_PROJECT_DIR}/.agents/skills/clojure-repl-first.preferences.md" 2>/dev/null || true`
 
 If your agent doesn't run the line above, read these files yourself if they
 exist: `clojure-repl-first.preferences.md` next to this skill's folder, then

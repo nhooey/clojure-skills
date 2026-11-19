@@ -79,8 +79,8 @@
         # (motd, install-skills startup, the ci/dev/maintenance command trio,
         # and the reap-skills/update-skills-devshell pair). Configured via the
         # `agent-skill-flake.devshellSkills` options block below. The dev-shell
-        # skill set (the base coding-agent, git/GitHub and shell skills plus
-        # skillspkgs' `authoring` combination) is defined in the runtime
+        # skill set (skillspkgs' `skill-collections` family combination, with
+        # no additions) is defined in the runtime
         # `skills-devshell/` sub-flake and invoked at RUNTIME, never as a root
         # input, so this repo keeps zero skill inputs in its own lock.
         inputs.agent-skill-flake.flakeModules.devshellSkills
@@ -108,6 +108,7 @@
               gawk
               gnugrep
               gnused
+              yq-go
             ];
             text = builtins.readFile ./checks/skill-lint.sh;
           };
@@ -121,7 +122,9 @@
 
           # `verify` for every skill with a citations.lock.json, a build of
           # every package so `nix flake check` fails when one breaks, a lint
-          # of each skill's frontmatter and links, and the lint's own tests.
+          # of each skill's frontmatter and links, the lint's own tests, and a
+          # run of each "Your preferences" command line through a symlinked
+          # skill folder.
           checks =
             inputs.skill-authoring-skills.lib.citationChecks {
               inherit pkgs;
@@ -135,6 +138,10 @@
               '';
               skill-lint-test = pkgs.runCommand "skill-lint-test" { } ''
                 ${pkgs.bash}/bin/bash ${./checks/skill-lint-test.sh} ${pkgs.lib.getExe skill-lint}
+                touch $out
+              '';
+              preferences-section-test = pkgs.runCommand "preferences-section-test" { } ''
+                ${pkgs.bash}/bin/bash ${./checks/preferences-section-test.sh} ${./skills}
                 touch $out
               '';
             };

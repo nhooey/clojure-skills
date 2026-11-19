@@ -41,7 +41,18 @@ make_skill "$work/clean" demo "$good_frontmatter
 
 # Demo
 
-See [Usage](#usage) and [notes](notes.md#the-notes), not \`[code](nowhere.md)\`.
+See [Usage](#usage) and [notes](notes.md#the-notes \"The notes\"), not \`[code](nowhere.md)\`.
+
+1. In a list item:
+
+   \`\`\`clojure
+   (str \"[code](nowhere.md)\")
+   # Not a heading
+   \`\`\`
+
+~~~text
+[code](nowhere.md)
+~~~
 
 ## Usage
 "
@@ -51,6 +62,19 @@ if "$lint" "$work/clean" >/dev/null; then
 else
   echo "FAIL clean: lint failed on a clean skill"
   "$lint" "$work/clean" || true
+  failures=$((failures + 1))
+fi
+
+make_skill "$work/quoted-name" demo '---
+name: "demo" # the skill
+description: >
+  A demo skill.
+---'
+if out=$("$lint" "$work/quoted-name" 2>&1); then
+  echo "ok   quoted-name"
+else
+  echo "FAIL quoted-name: lint failed on a quoted name:"
+  printf '%s\n' "$out"
   failures=$((failures + 1))
 fi
 
@@ -64,6 +88,12 @@ make_skill "$work/unclosed" demo "---
 name: demo
 description: x"
 expect_fail unclosed "no closed --- frontmatter block"
+
+make_skill "$work/invalid-yaml" demo '---
+name: demo
+description: "unclosed
+---'
+expect_fail invalid-yaml "frontmatter is not valid YAML"
 
 make_skill "$work/wrong-name" demo "---
 name: other
@@ -98,6 +128,17 @@ expect_fail long-description "description is 1025 characters, over 1024"
 make_skill "$work/missing-file" demo "$good_frontmatter
 See [notes](notes.md)."
 expect_fail missing-file "link to missing file: notes.md"
+
+make_skill "$work/missing-titled-file" demo "$good_frontmatter
+See [notes](notes.md \"The notes\")."
+expect_fail missing-titled-file "link to missing file: notes.md"
+
+make_skill "$work/fenced-heading" demo "$good_frontmatter
+See [Usage](#usage).
+~~~sh
+# Usage
+~~~"
+expect_fail fenced-heading "link to missing heading: #usage"
 
 make_skill "$work/missing-anchor" demo "$good_frontmatter
 See [Usage](#usage).
